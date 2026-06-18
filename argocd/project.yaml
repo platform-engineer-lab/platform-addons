@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: addons
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Platform addons — Argo Workflows, Argo Events, GitOps Promoter
+  sourceRepos:
+    - https://argoproj.github.io/argo-helm
+    - https://github.com/platform-engineer-lab/platform-addons.git
+    - https://github.com/argoproj-labs/gitops-promoter.git
+  destinations:
+    - namespace: '*'
+      server: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

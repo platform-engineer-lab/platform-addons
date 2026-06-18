@@ -1,0 +1,37 @@
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+server:
+  enabled: true
+  extraArgs:
+    - --auth-mode=server
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+executor:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
+
+workflow:
+  serviceAccount:
+    create: true
+    name: argo-workflow
+
+useDefaultArtifactRepo: false

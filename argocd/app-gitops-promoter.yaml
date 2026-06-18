@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitops-promoter
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: addons
+  source:
+    repoURL: https://github.com/argoproj-labs/gitops-promoter.git
+    targetRevision: v0.32.0
+    path: config/default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: promoter-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

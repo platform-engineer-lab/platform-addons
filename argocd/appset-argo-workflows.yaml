@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: argo-workflows
+  namespace: argocd
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: env
+              operator: In
+              values: [dev, prod]
+  template:
+    metadata:
+      name: 'argo-workflows-{{name}}'
+    spec:
+      project: addons
+      sources:
+        - repoURL: https://argoproj.github.io/argo-helm
+          chart: argo-workflows
+          targetRevision: '1.0.16'
+          helm:
+            releaseName: argo-workflows
+            valueFiles:
+              - $values/addons/argo-workflows/values-base.yaml
+              - $values/addons/argo-workflows/values-{{name}}.yaml
+        - repoURL: https://github.com/platform-engineer-lab/platform-addons.git
+          targetRevision: HEAD
+          ref: values
+      destination:
+        server: '{{server}}'
+        namespace: argo
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
