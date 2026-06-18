@@ -1,0 +1,21 @@
+api:
+  adminAccount:
+    enabled: true
+    # password: admin  (bcrypt hash below — lab only, change for real use)
+    passwordHash: "$2y$10$htg1GUAMYdVDWgYklzGJF.w7QOeS9xF.rErKVEFmUpgsFMRTKk3/W"
+    tokenSigningKey: "SBlsWEE12MD7LtI6J4rMqfMyIyyZyskZ"
+    tokenTTL: 24h
+  tls:
+    # disabled — no cert-manager in this lab
+    enabled: false
+  argocd:
+    urls:
+      "": http://argocd-server.argocd.svc.cluster.local
+
+# admission webhooks require TLS — disable for lab (no cert-manager)
+webhooks:
+  register: false
+
+# external webhook receiver not needed for lab evaluation
+externalWebhooksServer:
+  enabled: false
