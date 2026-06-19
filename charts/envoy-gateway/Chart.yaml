@@ -1,0 +1,6 @@
+apiVersion: v2
+name: envoy-gateway
+description: Local wrapper chart for Envoy Gateway v1.8.1 controller (CRDs installed separately via bootstrap)
+type: application
+version: 1.8.1
+appVersion: v1.8.1

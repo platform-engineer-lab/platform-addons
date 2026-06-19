@@ -9,18 +9,12 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform-addons
-  sources:
-    - repoURL: oci://docker.io/envoyproxy
-      chart: gateway-helm
-      targetRevision: v1.8.1
-      helm:
-        releaseName: envoy-gateway
-        valueFiles:
-          - $config/roles/prod/envoy-gateway/default-values.yaml
-          - $config/roles/prod/envoy-gateway/prod-values.yaml
-    - repoURL: https://github.com/platform-engineer-lab/platform-addons
-      targetRevision: HEAD
-      ref: config
+  source:
+    repoURL: https://github.com/platform-engineer-lab/platform-addons
+    targetRevision: main
+    path: charts/envoy-gateway
+    helm:
+      releaseName: envoy-gateway
   destination:
     name: prod
     namespace: envoy-gateway-system
@@ -31,7 +25,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - Replace=true
     retry:
       limit: 10
       backoff:
