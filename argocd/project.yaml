@@ -6,12 +6,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Platform addons — Argo Workflows, Argo Events, GitOps Promoter
+  description: Platform addons — GitOps Promoter, cert-manager
   sourceRepos:
-    - https://argoproj.github.io/argo-helm
     - https://github.com/platform-engineer-lab/platform-addons.git
-    - https://github.com/argoproj-labs/gitops-promoter.git
-    - ghcr.io/akuity/kargo-charts
     - https://charts.jetstack.io
   destinations:
     - namespace: '*'
