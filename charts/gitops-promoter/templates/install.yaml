@@ -162,19 +162,19 @@ spec:
 
                       Example:
 
-                        {{- $baseURL := "https://dev.argocd.local" -}}
-                        {{- if eq .Environment "environment/development" -}}
-                        {{- $baseURL = "https://dev.argocd.local" -}}
-                        {{- else if eq .Environment "environment/staging" -}}
-                        {{- $baseURL = "https://staging.argocd.local" -}}
-                        {{- else if eq .Environment "environment/production" -}}
-                        {{- $baseURL = "https://prod.argocd.local" -}}
-                        {{- end -}}
-                        {{- $labels := "" -}}
-                        {{- range $key, $value := .ArgoCDCommitStatus.Spec.ApplicationSelector.MatchLabels -}}
-                        {{- $labels = printf "%s%s=%s," $labels $key $value -}}
-                        {{- end -}}
-                        {{ printf "%s/applications?labels=%s" $baseURL (urlQueryEscape $labels) }}
+                        {{ "{{" {{ "}}" }}- $baseURL := "https://dev.argocd.local" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- if eq .Environment "environment/development" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- $baseURL = "https://dev.argocd.local" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- else if eq .Environment "environment/staging" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- $baseURL = "https://staging.argocd.local" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- else if eq .Environment "environment/production" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- $baseURL = "https://prod.argocd.local" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- end -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- $labels := "" -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- range $key, $value := .ArgoCDCommitStatus.Spec.ApplicationSelector.MatchLabels -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- $labels = printf "%s%s=%s," $labels $key $value -{{ "}}" }}
+                        {{ "{{" {{ "}}" }}- end -{{ "}}" }}
+                        {{ "{{" {{ "}}" }} printf "%s/applications?labels=%s" $baseURL (urlQueryEscape $labels) {{ "}}" }}
                     type: string
                 type: object
             required:
@@ -6816,10 +6816,10 @@ spec:
                   How spec.mode.context restricts template data: see ModeSpec.
 
                   Additional template variables (not in HTTPRequestSpec):
-                    - {{ index .TriggerVariables "key" }}: result of trigger.when.variables.expression this reconcile (nil if not configured)
-                    - {{ index .SuccessVariables "key" }}: result of success.when.variables.expression this reconcile (nil if not configured)
+                    - {{ "{{" {{ "}}" }} index .TriggerVariables "key" {{ "}}" }}: result of trigger.when.variables.expression this reconcile (nil if not configured)
+                    - {{ "{{" {{ "}}" }} index .SuccessVariables "key" {{ "}}" }}: result of success.when.variables.expression this reconcile (nil if not configured)
 
-                  Examples: "External approval for {{ .Branch }}", "{{ .Phase }} - waiting for external approval".
+                  Examples: "External approval for {{ "{{" {{ "}}" }} .Branch {{ "}}" }}", "{{ "{{" {{ "}}" }} .Phase {{ "}}" }} - waiting for external approval".
 
                   If not specified, defaults to empty string.
                 type: string
@@ -7191,8 +7191,8 @@ spec:
                               The result is injected as top-level binding Variables (map) for Expression and Output.Expression only — use Variables.<key> in those expressions.
                               The Variables binding is not set when spec.variables is omitted. It is not available to response.output.expression.
                               The result is also available in Go templates for DescriptionTemplate and UrlTemplate:
-                                - trigger.when.variables result → {{ index .TriggerVariables "key" }}
-                                - success.when.variables result → {{ index .SuccessVariables "key" }}
+                                - trigger.when.variables result → {{ "{{" {{ "}}" }} index .TriggerVariables "key" {{ "}}" }}
+                                - success.when.variables result → {{ "{{" {{ "}}" }} index .SuccessVariables "key" {{ "}}" }}
                             properties:
                               expression:
                                 description: Expression is an expr expression that
@@ -7325,8 +7325,8 @@ spec:
                           The result is injected as top-level binding Variables (map) for Expression and Output.Expression only — use Variables.<key> in those expressions.
                           The Variables binding is not set when spec.variables is omitted. It is not available to response.output.expression.
                           The result is also available in Go templates for DescriptionTemplate and UrlTemplate:
-                            - trigger.when.variables result → {{ index .TriggerVariables "key" }}
-                            - success.when.variables result → {{ index .SuccessVariables "key" }}
+                            - trigger.when.variables result → {{ "{{" {{ "}}" }} index .TriggerVariables "key" {{ "}}" }}
+                            - success.when.variables result → {{ "{{" {{ "}}" }} index .SuccessVariables "key" {{ "}}" }}
                         properties:
                           expression:
                             description: Expression is an expr expression that must
@@ -7346,8 +7346,8 @@ spec:
                   UrlTemplate is the commit status target URL in the SCM provider. Same Go templates, variables (including .TriggerVariables and .SuccessVariables), timing, and context rules as DescriptionTemplate.
                   Typical uses: approval UI, dashboard, API, or runbook links.
                   To include the reported SHA, walk PromotionStrategy.Status.Environments by Branch:
-                    "https://approvals.example.com/{{ range .PromotionStrategy.Status.Environments }}{{ if eq .Branch $.Branch }}{{ .Proposed.Hydrated.Sha }}{{ end }}{{ end }}"
-                  For branch-only links: "https://dashboard.example.com/{{ .Branch }}/status".
+                    "https://approvals.example.com/{{ "{{" {{ "}}" }} range .PromotionStrategy.Status.Environments {{ "}}" }}{{ "{{" {{ "}}" }} if eq .Branch $.Branch {{ "}}" }}{{ "{{" {{ "}}" }} .Proposed.Hydrated.Sha {{ "}}" }}{{ "{{" {{ "}}" }} end {{ "}}" }}{{ "{{" {{ "}}" }} end {{ "}}" }}"
+                  For branch-only links: "https://dashboard.example.com/{{ "{{" {{ "}}" }} .Branch {{ "}}" }}/status".
 
                   If not specified, defaults to empty string (no URL shown).
                 type: string
@@ -8481,13 +8481,13 @@ spec:
       requeueDuration: 5m
   pullRequest:
     template:
-      description: This PR is promoting {{ with .ChangeTransferPolicy.Spec.ActivePath
-        }}`{{ . }}` on {{ end }}the environment branch `{{ .ChangeTransferPolicy.Spec.ActiveBranch
-        }}` from dry sha {{ .ChangeTransferPolicy.Status.Active.Dry.Sha }} to {{ .ChangeTransferPolicy.Status.Proposed.Dry.Sha
-        }}.
-      title: Promote {{ with .ChangeTransferPolicy.Spec.ActivePath }}`{{ . }}` {{
-        end }}({{ trunc 5 .ChangeTransferPolicy.Status.Proposed.Dry.Sha }}) to `{{
-        .ChangeTransferPolicy.Spec.ActiveBranch }}`
+      description: This PR is promoting {{ "{{" {{ "}}" }} with .ChangeTransferPolicy.Spec.ActivePath
+        {{ "}}" }}`{{ "{{" {{ "}}" }} . {{ "}}" }}` on {{ "{{" {{ "}}" }} end {{ "}}" }}the environment branch `{{ "{{" {{ "}}" }} .ChangeTransferPolicy.Spec.ActiveBranch
+        {{ "}}" }}` from dry sha {{ "{{" {{ "}}" }} .ChangeTransferPolicy.Status.Active.Dry.Sha {{ "}}" }} to {{ "{{" {{ "}}" }} .ChangeTransferPolicy.Status.Proposed.Dry.Sha
+        {{ "}}" }}.
+      title: Promote {{ "{{" {{ "}}" }} with .ChangeTransferPolicy.Spec.ActivePath {{ "}}" }}`{{ "{{" {{ "}}" }} . {{ "}}" }}` {{ "{{" {{ "}}" }}
+        end {{ "}}" }}({{ "{{" {{ "}}" }} trunc 5 .ChangeTransferPolicy.Status.Proposed.Dry.Sha {{ "}}" }}) to `{{ "{{" {{ "}}" }}
+        .ChangeTransferPolicy.Spec.ActiveBranch {{ "}}" }}`
     workQueue:
       maxConcurrentReconciles: 10
       rateLimiter:
