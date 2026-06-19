@@ -1,0 +1,8 @@
+# dev spoke — lighter resource limits
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi

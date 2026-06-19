@@ -1,0 +1,5 @@
+# Wrapper chart — upstream ships no Helm chart.
+# The templates/install.yaml is the verbatim install-without-ui.yaml from
+# https://github.com/argoproj-labs/gitops-promoter/releases/tag/v0.32.0
+# No configurable values yet; override by patching via Argo CD ignoreDifferences
+# or by adding Helm templating to templates/install.yaml in a future version.

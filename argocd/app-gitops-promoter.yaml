@@ -8,9 +8,9 @@ metadata:
 spec:
   project: addons
   source:
-    repoURL: https://github.com/argoproj-labs/gitops-promoter.git
-    targetRevision: v0.32.0
-    path: config/default
+    repoURL: https://github.com/platform-engineer-lab/platform-addons.git
+    targetRevision: HEAD
+    path: charts/gitops-promoter
   destination:
     server: https://kubernetes.default.svc
     namespace: promoter-system
