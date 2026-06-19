@@ -16,6 +16,10 @@ api:
 webhooks:
   register: false
 
-# external webhook receiver not needed for lab evaluation
+# internal webhook server also requires cert-manager TLS — disable for lab
+webhooksServer:
+  enabled: false
+
+# external SCM webhook receiver not needed for lab evaluation
 externalWebhooksServer:
   enabled: false
