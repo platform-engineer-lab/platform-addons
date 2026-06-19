@@ -1,0 +1,50 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: dev
+  namespace: guestbook
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      direct: true
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: argocd-update
+        config:
+          apps:
+          - name: kargo-guestbook-dev
+            namespace: argocd
+            sources:
+            - repoURL: https://github.com/argoproj/argocd-example-apps.git
+              desiredRevision: ${{ commitFrom("https://github.com/argoproj/argocd-example-apps.git").ID }}
+              updateTargetRevision: true
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: prod
+  namespace: guestbook
+spec:
+  requestedFreight:
+  - origin:
+      kind: Warehouse
+      name: guestbook
+    sources:
+      stages:
+      - dev
+  promotionTemplate:
+    spec:
+      steps:
+      - uses: argocd-update
+        config:
+          apps:
+          - name: kargo-guestbook-prod
+            namespace: argocd
+            sources:
+            - repoURL: https://github.com/argoproj/argocd-example-apps.git
+              desiredRevision: ${{ commitFrom("https://github.com/argoproj/argocd-example-apps.git").ID }}
+              updateTargetRevision: true

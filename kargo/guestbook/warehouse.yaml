@@ -1,0 +1,11 @@
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: guestbook
+  namespace: guestbook
+spec:
+  subscriptions:
+  - git:
+      repoURL: https://github.com/argoproj/argocd-example-apps.git
+      branch: master
+      discoveryLimit: 5

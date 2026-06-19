@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kargo-guestbook-dev
+  namespace: argocd
+  annotations:
+    kargo.akuity.io/authorized-stage: guestbook:dev
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+    targetRevision: HEAD
+    path: guestbook
+  destination:
+    name: dev
+    namespace: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
