@@ -1,0 +1,15 @@
+config:
+  envoyGateway:
+    logging:
+      level:
+        default: warn
+
+deployment:
+  envoyGateway:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
