@@ -1,0 +1,41 @@
+# roles/prod/cert-manager/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform-addons
+
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.20.2
+      helm:
+        releaseName: cert-manager
+        valueFiles:
+          - $config/roles/prod/cert-manager/default-values.yaml
+          - $config/roles/prod/cert-manager/prod-values.yaml
+    - repoURL: https://github.com/platform-engineer-lab/platform-addons
+      targetRevision: HEAD
+      ref: config
+  destination:
+    name: prod
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

@@ -1,3 +1,4 @@
+# roles/management/gitops-promoter/application.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -5,14 +6,16 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: addons
+  project: platform-addons
   source:
-    repoURL: https://github.com/platform-engineer-lab/platform-addons.git
-    targetRevision: HEAD
+    repoURL: https://github.com/platform-engineer-lab/platform-addons
+    targetRevision: main
     path: charts/gitops-promoter
   destination:
-    server: https://kubernetes.default.svc
+    name: in-cluster
     namespace: promoter-system
   syncPolicy:
     automated:
@@ -21,3 +24,9 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

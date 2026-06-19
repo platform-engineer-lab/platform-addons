@@ -1,82 +1,99 @@
 # platform-addons
 
-GitOps addon manifests for the [platform-control-plane](https://github.com/platform-engineer-lab/platform-control-plane) lab. Argo CD on the management cluster watches this repository and reconciles the addon stack across spoke clusters.
+Role-based GitOps addon configuration for the [platform-control-plane](https://github.com/platform-engineer-lab/platform-control-plane) lab. Argo CD on the management cluster watches this repository and reconciles the addon stack across all clusters.
+
+Modelled after [twplatformlabs/psk-aws-control-plane-configuration](https://github.com/twplatformlabs/psk-aws-control-plane-configuration), with the following intentional differences:
+
+- **Hub-and-spoke** topology — one management Argo CD deploys to all clusters via cluster secrets; each `application.yaml` carries an explicit `destination.name` targeting its cluster (the reference uses a dedicated Argo CD per cluster with `https://kubernetes.default.svc`).
+- App names are suffixed per role (`cert-manager-dev`) to avoid collisions in a shared Argo CD.
+- Local wrapper charts live in `charts/` for addons with no official Helm chart.
 
 ## Addons
 
-| Addon | Target | Chart / Source |
-|---|---|---|
-| Argo Workflows | dev, prod spokes | `argo/argo-workflows` v1.0.16 |
-| Argo Events | dev, prod spokes | `argo/argo-events` v2.4.22 |
-| GitOps Promoter | management cluster | kustomize `config/default` @ v0.32.0 |
+| Addon | Role(s) | Wave | Source |
+|---|---|---|---|
+| cert-manager v1.20.2 | management, dev, prod | 0 | `https://charts.jetstack.io` |
+| gitops-promoter v0.32.0 | management | 1 | local wrapper chart |
 
 ## How it works
 
 ```
-platform-control-plane/gitops/addons-bootstrap.yaml   (App-of-Apps)
-  └── watches platform-addons/argocd/
-        ├── project.yaml              AppProject "addons"
-        ├── appset-argo-workflows.yaml   ApplicationSet → dev + prod
-        ├── appset-argo-events.yaml      ApplicationSet → dev + prod
-        └── app-gitops-promoter.yaml     Application  → management
+platform-control-plane/scripts/bootstrap.sh
+  ├── creates AppProject "platform-addons"
+  ├── management-configuration App  →  roles/management/   (**/application.yaml)
+  ├── dev-configuration App          →  roles/dev/          (**/application.yaml)
+  └── prod-configuration App         →  roles/prod/         (**/application.yaml)
 ```
 
-Each ApplicationSet uses [multi-source](https://argo-cd.readthedocs.io/en/stable/user-guide/multiple_sources/) to pull the Helm chart from the upstream repo and values from this repo:
-
-```
-sources:
-  - chart: argo-workflows          # upstream Helm chart
-    valueFiles:
-      - $values/addons/argo-workflows/values-base.yaml
-      - $values/addons/argo-workflows/values-{{name}}.yaml
-  - ref: values                    # this repo as the values source
-```
+Each root Application recurses its role directory and discovers addons automatically via `directory.recurse: true` + `include: "**/application.yaml"`. Adding a new addon only requires creating a new `<addon>/application.yaml` file — no root manifests to update.
 
 ## Repository layout
 
 ```
-argocd/
-  project.yaml                 AppProject "addons"
-  appset-argo-workflows.yaml   ApplicationSet — fans to dev/prod
-  appset-argo-events.yaml      ApplicationSet — fans to dev/prod
-  app-gitops-promoter.yaml     Application — management cluster
+roles/
+  management/
+    cert-manager/
+      application.yaml        Argo CD Application (wave 0, destination.name: in-cluster)
+      default-values.yaml     base Helm values for this role
+      management-values.yaml  role-specific overrides
+    gitops-promoter/
+      application.yaml        Argo CD Application (wave 1, destination.name: in-cluster)
+  dev/
+    cert-manager/
+      application.yaml        (wave 0, destination.name: dev)
+      default-values.yaml
+      dev-values.yaml
+  prod/
+    cert-manager/
+      application.yaml        (wave 0, destination.name: prod)
+      default-values.yaml
+      prod-values.yaml
 
-addons/
-  argo-workflows/
-    values-base.yaml           shared defaults
-    values-dev.yaml            dev overrides
-    values-prod.yaml           prod overrides
-  argo-events/
-    values-base.yaml
-    values-dev.yaml
-    values-prod.yaml
+charts/
+  gitops-promoter/            local Helm wrapper (upstream ships no official chart)
+    Chart.yaml
+    values.yaml
+    files/install.yaml        raw upstream manifests (not processed by Helm templates)
+    templates/install.yaml    {{ .Files.Get "files/install.yaml" }}
 ```
 
-## Bootstrapping
+## Application pattern
 
-The `platform-control-plane` repo contains `gitops/addons-bootstrap.yaml` — an Argo CD Application that points at this repo's `argocd/` directory. Apply it once after `make up`:
+Each `application.yaml` uses [multi-source](https://argo-cd.readthedocs.io/en/stable/user-guide/multiple_sources/) to pull the Helm chart from upstream and values from this repo:
 
-```bash
-# from platform-control-plane/
-kubectl --context k3d-management apply -f gitops/addons-bootstrap.yaml
+```yaml
+sources:
+  - repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.20.2
+    helm:
+      valueFiles:
+        - $config/roles/management/cert-manager/default-values.yaml
+        - $config/roles/management/cert-manager/management-values.yaml
+  - repoURL: https://github.com/platform-engineer-lab/platform-addons
+    targetRevision: HEAD
+    ref: config
 ```
 
-Argo CD will then self-manage everything in `argocd/`.
+Sync waves are set via annotation:
 
-### Manual apply (without bootstrap app)
-
-```bash
-# from platform-addons/
-make apply
+```yaml
+annotations:
+  argocd.argoproj.io/sync-wave: "0"
 ```
-
-## Customising per-environment values
-
-Edit `addons/<addon>/values-<env>.yaml` and push. Argo CD will detect the change and reconcile within ~3 minutes (default polling interval).
 
 ## Adding a new addon
 
-1. Add a new ApplicationSet (or Application) under `argocd/`.
-2. Add `addons/<new-addon>/values-base.yaml` and environment overrides.
-3. Add the chart's `repoURL` to `argocd/project.yaml` `sourceRepos`.
-4. Push — the bootstrap app reconciles automatically.
+1. Create `roles/<role>/<addon>/application.yaml` — set `destination.name`, `sync-wave`, project, and sources.
+2. Add `default-values.yaml` and `<role>-values.yaml` in the same directory.
+3. If the addon has no official Helm chart, add a wrapper under `charts/<addon>/` following the gitops-promoter pattern.
+4. Push — the `<role>-configuration` root app discovers the new `application.yaml` automatically.
+
+## Local Helm wrapper pattern
+
+gitops-promoter ships only raw install YAML (no Helm chart). The wrapper:
+
+1. Stores the raw upstream `install.yaml` in `charts/gitops-promoter/files/` (Helm does not template `files/`).
+2. Exposes it via a single-line template: `{{ .Files.Get "files/install.yaml" }}`.
+
+This gives Argo CD a Helm chart to track and sync while bypassing Helm's `{{ }}` processing on the upstream manifests (which contain Go template syntax in CRD specs).
