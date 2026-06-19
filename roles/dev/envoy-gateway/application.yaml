@@ -10,9 +10,9 @@ metadata:
 spec:
   project: platform-addons
   source:
-    repoURL: https://github.com/platform-engineer-lab/platform-addons
-    targetRevision: main
-    path: charts/envoy-gateway
+    repoURL: registry-1.docker.io/envoyproxy
+    chart: gateway-helm
+    targetRevision: v1.8.1
     helm:
       releaseName: envoy-gateway
   destination:
