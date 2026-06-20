@@ -1,0 +1,15 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: management
+      namespace: argocd
+  hostnames:
+    - "management.platformlab.com"
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 80
