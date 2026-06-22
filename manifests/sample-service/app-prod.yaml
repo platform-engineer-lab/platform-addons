@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-service-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: sample-service
+  annotations:
+    promoter.argoproj.io/has-promotionstrategy: "true"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: business-apps
+  sourceHydrator:
+    drySource:
+      repoURL: https://github.com/platform-engineer-lab/sample-service-config
+      targetRevision: HEAD
+      path: chart
+      helm:
+        releaseName: sample-service
+        valueFiles:
+          - env/prod/values.yaml
+    syncSource:
+      targetBranch: env/prod
+      path: hydrated/sample-service-prod
+    hydrateTo:
+      targetBranch: env/prod-next
+  destination:
+    name: prod
+    namespace: sample-service
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m

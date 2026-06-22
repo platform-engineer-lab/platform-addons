@@ -1,0 +1,15 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: PromotionStrategy
+metadata:
+  name: sample-service
+  namespace: promoter-system
+spec:
+  gitRepositoryRef:
+    name: sample-service-config
+  activeCommitStatuses:
+    - key: argocd-health
+  environments:
+    - branch: env/dev
+      autoMerge: true
+    - branch: env/prod
+      autoMerge: true

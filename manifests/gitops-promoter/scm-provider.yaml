@@ -1,0 +1,11 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: ScmProvider
+metadata:
+  name: platform-lab
+  namespace: promoter-system
+spec:
+  github:
+    appID: 0          # TODO: replace with your GitHub App's numeric ID
+    # installationID: 0  # optional; omit to let the controller discover installations
+  secretRef:
+    name: github-app-credentials

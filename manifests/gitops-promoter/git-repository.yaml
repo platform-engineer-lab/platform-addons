@@ -1,0 +1,12 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: GitRepository
+metadata:
+  name: sample-service-config
+  namespace: promoter-system
+spec:
+  github:
+    owner: platform-engineer-lab
+    name: sample-service-config
+  scmProviderRef:
+    kind: ScmProvider
+    name: platform-lab
