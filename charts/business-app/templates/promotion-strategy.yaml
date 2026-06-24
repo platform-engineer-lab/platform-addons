@@ -1,0 +1,15 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: PromotionStrategy
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.promoterNamespace }}
+spec:
+  gitRepositoryRef:
+    name: {{ .Values.githubName }}
+  activeCommitStatuses:
+    - key: {{ .Values.commitStatusKey }}
+  environments:
+    {{- range .Values.environments }}
+    - branch: env/{{ .env }}
+      autoMerge: true
+    {{- end }}

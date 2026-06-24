@@ -1,0 +1,46 @@
+{{- range .Values.environments }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $.Values.appName }}-{{ .env }}
+  namespace: {{ $.Values.argocdNamespace }}
+  labels:
+    app.kubernetes.io/name: {{ $.Values.appName }}
+  annotations:
+    promoter.argoproj.io/has-promotionstrategy: "true"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ $.Values.project }}
+  sourceHydrator:
+    drySource:
+      repoURL: {{ $.Values.configRepoURL }}
+      targetRevision: HEAD
+      path: {{ $.Values.chartPath }}
+      helm:
+        releaseName: {{ $.Values.appName }}
+        valueFiles:
+          - {{ .valuesFile }}
+    syncSource:
+      targetBranch: env/{{ .env }}
+      path: hydrated/{{ $.Values.appName }}-{{ .env }}
+    hydrateTo:
+      targetBranch: env/{{ .env }}-next
+  destination:
+    name: {{ .env }}
+    namespace: {{ $.Values.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+{{- end }}

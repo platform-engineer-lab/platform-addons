@@ -1,0 +1,11 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: ArgoCDCommitStatus
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.commitStatusKey }}
+  namespace: {{ .Values.promoterNamespace }}
+spec:
+  promotionStrategyRef:
+    name: {{ .Values.appName }}
+  applicationSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.appName }}

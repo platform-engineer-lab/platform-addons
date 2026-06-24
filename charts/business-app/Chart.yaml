@@ -1,0 +1,5 @@
+apiVersion: v2
+name: business-app
+description: Platform Helm chart that generates Argo CD Applications (sourceHydrator) and gitops-promoter CRs for a hydrator+promoter service. Rendered by the promoter ApplicationSet from .argocd/registry.yaml.
+type: application
+version: 0.1.0

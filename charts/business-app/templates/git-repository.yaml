@@ -1,0 +1,12 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: GitRepository
+metadata:
+  name: {{ .Values.githubName }}
+  namespace: {{ .Values.promoterNamespace }}
+spec:
+  github:
+    owner: {{ .Values.githubOwner }}
+    name: {{ .Values.githubName }}
+  scmProviderRef:
+    kind: ScmProvider
+    name: {{ .Values.scmProvider }}

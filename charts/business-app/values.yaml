@@ -1,0 +1,17 @@
+appName: ""
+configRepoURL: ""
+chartPath: chart
+namespace: ""
+githubOwner: ""
+githubName: ""
+environments:
+  - env: dev
+    valuesFile: env/dev/values.yaml
+  - env: prod
+    valuesFile: env/prod/values.yaml
+# Platform-wide defaults — rarely overridden per service
+promoterNamespace: promoter-system
+scmProvider: platform-lab
+commitStatusKey: argocd-health
+argocdNamespace: argocd
+project: business-apps
