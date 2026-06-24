@@ -7,6 +7,7 @@ Modelled after [twplatformlabs/psk-aws-control-plane-configuration](https://gith
 - **Hub-and-spoke** topology — one management Argo CD deploys to all clusters via cluster secrets; each `application.yaml` carries an explicit `destination.name` targeting its cluster (the reference uses a dedicated Argo CD per cluster with `https://kubernetes.default.svc`).
 - App names are suffixed per role (`cert-manager-dev`) to avoid collisions in a shared Argo CD.
 - Local wrapper charts live in `charts/` for addons with no official Helm chart.
+- **Platform-level concerns only** — app-level Argo CD Applications and gitops-promoter CRs live in each app's own config repo (e.g. `sample-service-config/config/`), not here.
 
 ## Addons
 
@@ -70,28 +71,48 @@ Each root Application recurses its role directory and discovers addons automatic
 roles/
   management/
     cert-manager/
-      application.yaml        Argo CD Application (wave 0, destination.name: in-cluster)
-      default-values.yaml     base Helm values for this role
-      management-values.yaml  role-specific overrides
+      application.yaml              Argo CD Application (wave 0, destination.name: in-cluster)
+      default-values.yaml           base Helm values for this role
+      management-values.yaml        role-specific overrides
     gitops-promoter/
-      application.yaml        Argo CD Application (wave 1, destination.name: in-cluster)
+      application.yaml              Argo CD Application (wave 1, destination.name: in-cluster)
+    gitops-promoter-config/
+      application.yaml              syncs manifests/gitops-promoter/ (wave 2, in-cluster)
+    envoy-gateway/
+      application.yaml              (wave 2, destination.name: in-cluster)
+    envoy-gateway-config/
+      application.yaml              (wave 3, destination.name: in-cluster)
   dev/
     cert-manager/
-      application.yaml        (wave 0, destination.name: dev)
+      application.yaml              (wave 0, destination.name: dev)
       default-values.yaml
       dev-values.yaml
+    envoy-gateway/
+      application.yaml              (wave 2, destination.name: dev)
+    envoy-gateway-config/
+      application.yaml              (wave 3, destination.name: dev)
   prod/
     cert-manager/
-      application.yaml        (wave 0, destination.name: prod)
+      application.yaml              (wave 0, destination.name: prod)
       default-values.yaml
       prod-values.yaml
+    envoy-gateway/
+      application.yaml              (wave 2, destination.name: prod)
+    envoy-gateway-config/
+      application.yaml              (wave 3, destination.name: prod)
+
+manifests/
+  gitops-promoter/
+    scm-provider.yaml               GitHub App config shared by all promoter-enabled apps
+  envoy-gateway/
+    <role>/                         GatewayClass, Gateway, EnvoyProxy per role
 
 charts/
-  gitops-promoter/            local Helm wrapper (upstream ships no official chart)
+  gitops-promoter/                  local Helm wrapper (upstream ships no official chart)
     Chart.yaml
     values.yaml
-    files/install.yaml        raw upstream manifests (not processed by Helm templates)
-    templates/install.yaml    {{ .Files.Get "files/install.yaml" }}
+    files/install.yaml              raw upstream manifests (not processed by Helm templates)
+    templates/install.yaml          {{ .Files.Get "files/install.yaml" }}
 ```
 
 ## Application pattern
@@ -125,6 +146,8 @@ annotations:
 2. Add `default-values.yaml` and `<role>-values.yaml` in the same directory.
 3. If the addon has no official Helm chart, add a wrapper under `charts/<addon>/` following the gitops-promoter pattern.
 4. Push — the `<role>-configuration` root app discovers the new `application.yaml` automatically.
+
+> **Do not add app-level resources here.** Argo CD Applications for business workloads and gitops-promoter CRs (`GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus`) for specific apps belong in the app's own config repo under `config/`, not in `platform-addons`.
 
 ## Local Helm wrapper pattern
 
