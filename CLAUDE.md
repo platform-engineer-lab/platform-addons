@@ -41,12 +41,21 @@ flowchart LR
 
 ## Architecture
 
-`platform-addons` is the role-based GitOps addon configuration repo. `platform-control-plane/scripts/bootstrap.sh` creates one App-of-Apps root Application per role (`management-configuration`, `dev-configuration`, `prod-configuration`), each pointing at `roles/<role>/` in this repo. Argo CD recurses the role directory and discovers addons via `directory.recurse: true` + `include: "**/application.yaml"`.
+`platform-addons` is the role-based GitOps addon configuration repo. It contains **platform-level concerns only** — addon installation and platform-wide operator config. App-level configs (Argo CD Applications, gitops-promoter CRs) live in each app's own config repo (e.g. `sample-service-config/config/`).
+
+`platform-control-plane/scripts/bootstrap.sh` creates one App-of-Apps root Application per role (`management-configuration`, `dev-configuration`, `prod-configuration`), each pointing at `roles/<role>/` in this repo. Argo CD recurses the role directory and discovers addons via `directory.recurse: true` + `include: "**/application.yaml"`.
 
 - `roles/<role>/<addon>/application.yaml` — Argo CD Application for that addon on that role.
 - `charts/<addon>/` — local Helm wrapper for addons with no official chart (e.g. gitops-promoter).
+- `manifests/gitops-promoter/scm-provider.yaml` — platform-level GitHub App config shared by all promoter-enabled apps. This is the only manifest in `manifests/` — app-level gitops-promoter CRs (`GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus`) now live in each app's config repo under `config/promoter/`.
 
 Sync waves control install order within a role: cert-manager (0) → gitops-promoter (1) → envoy-gateway (2) → envoy-gateway-config (3).
+
+## What does NOT belong here
+
+- Argo CD Application objects for business apps — those live in `<app>-config/config/apps/`
+- gitops-promoter `GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus` for specific apps — those live in `<app>-config/config/promoter/`
+- Helm values for business apps — those live in dedicated config repos (`podinfo-config`, `sample-service-config`, etc.)
 
 ## Key conventions
 
