@@ -7,8 +7,10 @@ githubName: ""
 environments:
   - env: dev
     valuesFile: env/dev/values.yaml
+    autoMerge: true
   - env: prod
     valuesFile: env/prod/values.yaml
+    autoMerge: true
 # Platform-wide defaults — rarely overridden per service
 promoterNamespace: promoter-system
 scmProvider: platform-lab

@@ -11,5 +11,5 @@ spec:
   environments:
     {{- range .Values.environments }}
     - branch: env/{{ .env }}
-      autoMerge: true
+      autoMerge: {{ .autoMerge }}
     {{- end }}
