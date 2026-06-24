@@ -47,15 +47,15 @@ flowchart LR
 
 - `roles/<role>/<addon>/application.yaml` — Argo CD Application for that addon on that role.
 - `charts/<addon>/` — local Helm wrapper for addons with no official chart (e.g. gitops-promoter).
-- `manifests/gitops-promoter/scm-provider.yaml` — platform-level GitHub App config shared by all promoter-enabled apps. This is the only manifest in `manifests/` — app-level gitops-promoter CRs (`GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus`) now live in each app's config repo under `config/promoter/`.
+- `manifests/gitops-promoter/scm-provider.yaml` — platform-level GitHub App config shared by all promoter-enabled apps.
+- `charts/business-app/` — golden-path Helm chart rendered by the `promoter` ApplicationSet. Given values from a service's `.argocd/registry.yaml`, it generates the `sourceHydrator` Applications (one per env) and the three gitops-promoter CRs (`GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus`). Services need no hand-written config — only `chart/` + `.argocd/registry.yaml`.
 
 Sync waves control install order within a role: cert-manager (0) → gitops-promoter (1) → envoy-gateway (2) → envoy-gateway-config (3).
 
 ## What does NOT belong here
 
-- Argo CD Application objects for business apps — those live in `<app>-config/config/apps/`
-- gitops-promoter `GitRepository`, `PromotionStrategy`, `ArgoCDCommitStatus` for specific apps — those live in `<app>-config/config/promoter/`
-- Helm values for business apps — those live in dedicated config repos (`podinfo-config`, `sample-service-config`, etc.)
+- App-specific Argo CD Application objects or gitops-promoter CRs authored by hand — `charts/business-app/` generates these from each service's `.argocd/registry.yaml`.
+- Helm values for business apps — those live in dedicated config repos (`podinfo-config`, `sample-service-config`, etc.).
 
 ## Key conventions
 
