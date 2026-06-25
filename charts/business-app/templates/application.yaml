@@ -48,4 +48,13 @@ spec:
       kind: HTTPRoute
       jqPathExpressions:
         - '.spec.rules[].backendRefs[].weight'
+    - group: ""
+      kind: Service
+      jqPathExpressions:
+        - '.spec.selector."rollouts-pod-template-hash"'
+        - '.metadata.annotations["argo-rollouts.argoproj.io/managed-by-rollouts"]'
+    - group: argoproj.io
+      kind: Rollout
+      jqPathExpressions:
+        - '.metadata.annotations["rollout.argoproj.io/revision"]'
 {{- end }}
