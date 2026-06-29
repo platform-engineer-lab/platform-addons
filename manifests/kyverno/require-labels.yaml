@@ -25,10 +25,14 @@ spec:
           - resources:
               namespaces:
                 - kube-system
+                - kube-node-lease
+                - kube-public
                 - kyverno
                 - argo-rollouts
                 - envoy-gateway-system
                 - cert-manager
+                - argocd
+                - promoter-system
       validate:
         message: "Pod must have an 'app' label."
         pattern:
