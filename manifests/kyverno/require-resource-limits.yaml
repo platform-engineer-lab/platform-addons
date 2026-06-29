@@ -20,6 +20,15 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - argo-rollouts
+                - envoy-gateway-system
+                - cert-manager
       validate:
         message: "All containers must set resources.limits.cpu and resources.limits.memory."
         pattern:
@@ -36,6 +45,15 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kyverno
+                - argo-rollouts
+                - envoy-gateway-system
+                - cert-manager
       preconditions:
         all:
           - key: "{{ request.object.spec.initContainers[] | length(@) }}"
