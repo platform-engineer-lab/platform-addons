@@ -10,9 +10,11 @@ metadata:
       once existing workloads are labelled.
 spec:
   validationFailureAction: Audit
+  admission: true
   background: true
   rules:
     - name: check-for-app-label
+      skipBackgroundRequests: true
       match:
         any:
           - resources:
