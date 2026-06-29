@@ -1,0 +1,52 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Require resource limits
+    policies.kyverno.io/description: >-
+      Requires all containers and init containers to specify CPU and memory
+      limits. Audit mode — switch validationFailureAction to Enforce once
+      existing workloads are compliant.
+spec:
+  validationFailureAction: Audit
+  admission: true
+  background: true
+  rules:
+    - name: check-container-limits
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "All containers must set resources.limits.cpu and resources.limits.memory."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+    - name: check-initcontainer-limits
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+            operator: GreaterThan
+            value: 0
+      validate:
+        message: "All init containers must set resources.limits.cpu and resources.limits.memory."
+        pattern:
+          spec:
+            initContainers:
+              - resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
