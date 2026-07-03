@@ -1,0 +1,9 @@
+apiVersion: v2
+name: service-app
+description: >-
+  Library chart for platform business services: canary Rollout + stable/canary
+  Services + HTTPRoute on the shared Envoy Gateway. App config repos vendor
+  this chart under chart/charts/service-app/ and render it via
+  {{ include "service-app.resources" . }} — values stay flat (no subchart scoping).
+type: library
+version: 0.1.0
