@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: business-apps
+  labels:
+    gateway-access: "true"
+  annotations:
+    # Namespace is shared with business-app workloads — never prune it from here.
+    argocd.argoproj.io/sync-options: Prune=false
