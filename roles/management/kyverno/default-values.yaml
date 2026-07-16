@@ -59,3 +59,7 @@ cleanupJobs:
   clusterEphemeralReports:
     image:
       repository: bitnamilegacy/kubectl
+# helm-hook report cleanup job uses its own image key
+policyReportsCleanup:
+  image:
+    repository: bitnamilegacy/kubectl
