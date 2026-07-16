@@ -37,3 +37,25 @@ reportsController:
     limits:
       cpu: 200m
       memory: 128Mi
+
+# bitnami/kubectl was withdrawn from Docker Hub; use Bitnami's legacy mirror
+# for the webhook + report cleanup jobs (multi-arch: amd64 + arm64).
+webhooksCleanup:
+  image:
+    repository: bitnamilegacy/kubectl
+cleanupJobs:
+  admissionReports:
+    image:
+      repository: bitnamilegacy/kubectl
+  clusterAdmissionReports:
+    image:
+      repository: bitnamilegacy/kubectl
+  updateRequests:
+    image:
+      repository: bitnamilegacy/kubectl
+  ephemeralReports:
+    image:
+      repository: bitnamilegacy/kubectl
+  clusterEphemeralReports:
+    image:
+      repository: bitnamilegacy/kubectl

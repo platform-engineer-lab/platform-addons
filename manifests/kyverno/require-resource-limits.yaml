@@ -6,10 +6,9 @@ metadata:
     policies.kyverno.io/title: Require resource limits
     policies.kyverno.io/description: >-
       Requires all containers and init containers to specify CPU and memory
-      limits. Audit mode — switch validationFailureAction to Enforce once
-      existing workloads are compliant.
+      limits. Enforce mode — non-compliant Pods are rejected at admission.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: Enforce
   admission: true
   background: true
   rules:
@@ -64,7 +63,9 @@ spec:
                 - promoter-system
       preconditions:
         all:
-          - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+          # `|| []` guards pods without initContainers — a bare projection
+          # errors on nil, which under Enforce would block the admission.
+          - key: "{{ length(request.object.spec.initContainers || `[]`) }}"
             operator: GreaterThan
             value: 0
       validate:

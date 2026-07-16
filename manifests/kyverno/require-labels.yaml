@@ -5,11 +5,10 @@ metadata:
   annotations:
     policies.kyverno.io/title: Require app label
     policies.kyverno.io/description: >-
-      Requires all Pods to carry an 'app' label. Audit mode — reports
-      violations without blocking. Switch validationFailureAction to Enforce
-      once existing workloads are labelled.
+      Requires all Pods to carry an 'app' or 'app.kubernetes.io/name' label.
+      Enforce mode — unlabelled Pods are rejected at admission.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: Enforce
   admission: true
   background: true
   rules:
@@ -34,8 +33,11 @@ spec:
                 - argocd
                 - promoter-system
       validate:
-        message: "Pod must have an 'app' label."
-        pattern:
-          metadata:
-            labels:
-              app: "?*"
+        message: "Pod must have an 'app' or 'app.kubernetes.io/name' label."
+        anyPattern:
+          - metadata:
+              labels:
+                app: "?*"
+          - metadata:
+              labels:
+                app.kubernetes.io/name: "?*"
