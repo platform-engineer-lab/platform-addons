@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets-management
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform-addons
+
+  sources:
+    - repoURL: https://charts.external-secrets.io
+      chart: external-secrets
+      targetRevision: 2.7.0
+      helm:
+        releaseName: external-secrets
+        valueFiles:
+          - $config/roles/management/external-secrets/default-values.yaml
+    - repoURL: https://github.com/platform-engineer-lab/platform-addons
+      targetRevision: HEAD
+      ref: config
+  destination:
+    name: in-cluster
+    namespace: external-secrets
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
