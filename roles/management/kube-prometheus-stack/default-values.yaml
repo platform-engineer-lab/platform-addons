@@ -1,0 +1,90 @@
+# Observability hub: Prometheus (remote-write receiver for the spokes) + Grafana.
+alertmanager:
+  enabled: false
+
+prometheus:
+  service:
+    # Reachable from spoke clusters inside the k3d-platform Docker network
+    # (not mapped to a host port).
+    type: NodePort
+    nodePort: 30090
+  prometheusSpec:
+    enableRemoteWriteReceiver: true
+    externalLabels:
+      cluster: management
+    retention: 24h
+    # Select every ServiceMonitor/PodMonitor in the cluster, not only
+    # helm-release-labelled ones (we ship custom monitors in monitoring-config).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  sidecar:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  # Rendered admission webhook jobs also need limits (kyverno Enforce).
+  admissionWebhooks:
+    patch:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi

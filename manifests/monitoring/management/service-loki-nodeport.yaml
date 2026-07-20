@@ -1,0 +1,18 @@
+# Loki push endpoint for spoke log collectors — reachable only inside the
+# k3d-platform Docker network (NodePort not mapped to a host port).
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-nodeport
+  namespace: monitoring
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/component: single-binary
+  ports:
+    - name: http
+      port: 3100
+      targetPort: 3100
+      nodePort: 30100

@@ -1,0 +1,10 @@
+# The argocd HTTPRoute lives here — must carry the gateway-access label or the
+# Argo CD UI breaks when the listener switches to Selector. Never prune.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    gateway-access: "true"
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
