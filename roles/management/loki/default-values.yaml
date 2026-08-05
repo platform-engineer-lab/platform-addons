@@ -17,6 +17,15 @@ loki:
           prefix: loki_index_
           period: 24h
 
+# Chart validation requires the SimpleScalable targets to be explicitly zero
+# when deploymentMode is SingleBinary (their defaults are non-zero).
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+
 singleBinary:
   replicas: 1
   persistence:
