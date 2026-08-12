@@ -32,6 +32,9 @@ spec:
                 - cert-manager
                 - argocd
                 - promoter-system
+                - monitoring
+                - external-secrets
+                - secret-store
       validate:
         message: "All containers must set resources.limits.cpu and resources.limits.memory."
         pattern:
@@ -61,6 +64,9 @@ spec:
                 - cert-manager
                 - argocd
                 - promoter-system
+                - monitoring
+                - external-secrets
+                - secret-store
       preconditions:
         all:
           # `|| []` guards pods without initContainers — a bare projection

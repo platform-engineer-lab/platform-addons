@@ -32,6 +32,9 @@ spec:
                 - cert-manager
                 - argocd
                 - promoter-system
+                - monitoring
+                - external-secrets
+                - secret-store
       validate:
         message: "Pod must have an 'app' or 'app.kubernetes.io/name' label."
         anyPattern:
