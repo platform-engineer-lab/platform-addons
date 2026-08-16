@@ -1,13 +1,17 @@
-# Log collector: tails all pod logs via the Kubernetes API and ships them to
-# the management hub's Loki with a cluster label. DaemonSet (one per node).
+# Log collector: tails container log FILES under /var/log/pods (reliable on
+# k3s — the API-based loki.source.kubernetes ships kubelet error bodies as log
+# content and fails on pods without logs) and ships to the hub Loki, tagged
+# cluster=<env>. DaemonSet, one per node; each tails only its node's pods.
 alloy:
+  mounts:
+    varlog: true
   configMap:
     content: |-
       discovery.kubernetes "pods" {
         role = "pod"
       }
 
-      discovery.relabel "pods" {
+      discovery.relabel "pod_logs" {
         targets = discovery.kubernetes.pods.targets
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
@@ -25,10 +29,29 @@ alloy:
           source_labels = ["__meta_kubernetes_pod_label_app"]
           target_label  = "app"
         }
+        // Build the on-disk log path glob:
+        // /var/log/pods/<namespace>_<pod>_<uid>/<container>/*.log
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          separator     = "/"
+          action        = "replace"
+          replacement   = "/var/log/pods/*$1/*.log"
+          target_label  = "__path__"
+        }
       }
 
-      loki.source.kubernetes "pods" {
-        targets    = discovery.relabel.pods.output
+      local.file_match "pod_logs" {
+        path_targets = discovery.relabel.pod_logs.output
+      }
+
+      loki.source.file "pod_logs" {
+        targets    = local.file_match.pod_logs.targets
+        forward_to = [loki.process.pod_logs.receiver]
+      }
+
+      loki.process "pod_logs" {
+        // container runtime (containerd) log format: "<ts> <stream> <flags> <msg>"
+        stage.cri {}
         forward_to = [loki.write.hub.receiver]
       }
 
