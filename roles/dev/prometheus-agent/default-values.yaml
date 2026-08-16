@@ -1,0 +1,61 @@
+# Metrics collector only — Prometheus runs in agent mode and remote-writes to
+# the management hub. No Grafana/Alertmanager/local query here.
+grafana:
+  enabled: false
+alertmanager:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    # agentMode drops the query/rules/TSDB layers, leaving scrape + remote-write.
+    agentMode: true
+    externalLabels:
+      cluster: dev
+    remoteWrite:
+      - url: http://k3d-management-server-0:30090/api/v1/write
+    # Select every ServiceMonitor/PodMonitor, not only helm-labelled ones.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 384Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  admissionWebhooks:
+    patch:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi

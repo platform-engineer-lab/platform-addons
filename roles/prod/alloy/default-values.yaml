@@ -1,0 +1,52 @@
+# Log collector: tails all pod logs via the Kubernetes API and ships them to
+# the management hub's Loki with a cluster label. DaemonSet (one per node).
+alloy:
+  configMap:
+    content: |-
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.write.hub.receiver]
+      }
+
+      loki.write "hub" {
+        endpoint {
+          url = "http://k3d-management-server-0:30100/loki/api/v1/push"
+        }
+        external_labels = {
+          cluster = "prod",
+        }
+      }
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+controller:
+  type: daemonset
