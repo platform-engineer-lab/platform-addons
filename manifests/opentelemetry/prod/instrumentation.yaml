@@ -1,0 +1,35 @@
+# Auto-instrumentation profile. Apps opt in via pod annotations referencing
+# business-apps/platform. Sidecars carry resource limits so the kyverno
+# Enforce policy admits the pods in the (non-excluded) business-apps namespace.
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: platform
+  namespace: business-apps
+spec:
+  exporter:
+    endpoint: http://otel-collector.monitoring:4318
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1.0"
+  resource:
+    addK8sUIDAttributes: true
+  java:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+  go:
+    resourceRequirements:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi

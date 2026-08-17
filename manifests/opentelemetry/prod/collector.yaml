@@ -1,0 +1,52 @@
+# App-telemetry gateway: receives OTLP from instrumented pods and fans out to
+# the hub backends — traces to Tempo, metrics to Mimir. Adds cluster=prod.
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: monitoring
+spec:
+  mode: deployment
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+      resource:
+        attributes:
+          - key: cluster
+            value: prod
+            action: upsert
+    exporters:
+      otlphttp/tempo:
+        endpoint: http://k3d-management-server-0:30318
+        tls:
+          insecure: true
+      prometheusremotewrite/mimir:
+        endpoint: http://k3d-management-server-0:30091/api/v1/push
+        external_labels:
+          cluster: prod
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [otlphttp/tempo]
+        metrics:
+          receivers: [otlp]
+          processors: [resource, batch]
+          exporters: [prometheusremotewrite/mimir]
