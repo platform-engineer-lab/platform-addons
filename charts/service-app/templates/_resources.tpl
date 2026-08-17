@@ -14,6 +14,10 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       containers:
         - name: {{ .Release.Name }}
