@@ -24,6 +24,9 @@ spec:
       containers:
         - name: mimir
           image: grafana/mimir:3.1.2
+          # All of Mimir's relative default paths (./data-ruler, activity log,
+          # etc.) resolve under the writable PVC instead of the read-only root.
+          workingDir: /data
           args:
             - -config.file=/etc/mimir/mimir.yaml
           ports:
