@@ -3,6 +3,10 @@
 manager:
   collectorImage:
     repository: otel/opentelemetry-collector-k8s
+  # Enable Go eBPF auto-instrumentation (alpha, gated off by default).
+  autoInstrumentation:
+    go:
+      enabled: true
   resources:
     requests:
       cpu: 50m
