@@ -1,0 +1,21 @@
+# OTLP ingest for spoke OTel Collectors — reachable only inside the
+# k3d-platform Docker network (NodePorts not host-mapped).
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-nodeport
+  namespace: monitoring
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: tempo
+    app.kubernetes.io/instance: tempo
+  ports:
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      nodePort: 30318
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      nodePort: 30317

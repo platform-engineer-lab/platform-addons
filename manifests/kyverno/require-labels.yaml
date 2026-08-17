@@ -35,6 +35,7 @@ spec:
                 - monitoring
                 - external-secrets
                 - secret-store
+                - opentelemetry-operator-system
       validate:
         message: "Pod must have an 'app' or 'app.kubernetes.io/name' label."
         anyPattern:

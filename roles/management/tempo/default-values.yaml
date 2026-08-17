@@ -1,0 +1,29 @@
+# Single-binary Tempo for the lab: local filesystem trace storage, OTLP in.
+tempo:
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+  retention: 72h
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+# Metrics generator writes span metrics to Mimir (RED metrics) — enabled later
+# once Mimir is up; keep off for the initial bring-up.

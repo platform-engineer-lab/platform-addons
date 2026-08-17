@@ -36,6 +36,40 @@ grafana:
       type: loki
       url: http://loki:3100
       access: proxy
+      jsonData:
+        # A trace id in a log line links straight to the Tempo trace.
+        derivedFields:
+          - name: TraceID
+            matcherRegex: '"trace_id":"(\w+)"'
+            url: '$${__value.raw}'
+            datasourceUid: tempo
+    # Mimir is the long-term, multi-cluster metrics store (Prometheus-compatible
+    # query API). Made default so existing dashboards query it transparently.
+    - name: Mimir
+      type: prometheus
+      uid: mimir
+      url: http://mimir:8080/prometheus
+      access: proxy
+      isDefault: true
+      jsonData:
+        timeInterval: 30s
+    - name: Tempo
+      type: tempo
+      uid: tempo
+      url: http://tempo:3200
+      access: proxy
+      jsonData:
+        # Correlate a span to its logs (Loki) and RED metrics (Mimir).
+        tracesToLogsV2:
+          datasourceUid: loki
+          filterByTraceID: true
+          tags: [{ key: 'service.name', value: 'app' }]
+        tracesToMetrics:
+          datasourceUid: mimir
+        serviceMap:
+          datasourceUid: mimir
+        nodeGraph:
+          enabled: true
   resources:
     requests:
       cpu: 50m
@@ -51,6 +85,10 @@ grafana:
       limits:
         cpu: 100m
         memory: 128Mi
+    datasources:
+      # Mimir is the default datasource (above); don't also provision the
+      # chart's built-in in-cluster Prometheus as default.
+      defaultDatasourceEnabled: false
 
 prometheusOperator:
   resources:

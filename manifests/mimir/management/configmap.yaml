@@ -1,0 +1,70 @@
+# Grafana Mimir in monolithic mode (target: all) with filesystem block storage.
+# The distributed chart (6+ pods + MinIO) doesn't fit the 16 GB lab VM; the
+# monolith is still genuine Grafana Mimir, single process, ~700 MB.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-config
+  namespace: monitoring
+data:
+  mimir.yaml: |
+    target: all
+    multitenancy_enabled: false
+
+    server:
+      http_listen_port: 8080
+      grpc_listen_port: 9095
+      log_level: warn
+
+    common:
+      storage:
+        backend: filesystem
+        filesystem:
+          dir: /data/blocks
+
+    blocks_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/blocks
+      bucket_store:
+        sync_dir: /data/tsdb-sync
+      tsdb:
+        dir: /data/tsdb
+
+    ruler_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/ruler
+
+    compactor:
+      data_dir: /data/compactor
+      sharding_ring:
+        kvstore:
+          store: memberlist
+
+    ingester:
+      ring:
+        replication_factor: 1
+        kvstore:
+          store: memberlist
+
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+        kvstore:
+          store: memberlist
+
+    distributor:
+      ring:
+        kvstore:
+          store: memberlist
+
+    memberlist:
+      join_members: []
+
+    limits:
+      # Lab-scale ingestion headroom for two clusters' agents + span metrics.
+      ingestion_rate: 100000
+      ingestion_burst_size: 200000
+      max_global_series_per_user: 0
+      compactor_blocks_retention_period: 7d
