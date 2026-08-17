@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}
+        # OTel derives OTEL_SERVICE_NAME from this label — gives a stable
+        # service name in Tempo instead of the churning ReplicaSet hash.
+        app.kubernetes.io/name: {{ .Release.Name }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
