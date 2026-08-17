@@ -11,6 +11,11 @@ data:
     target: all
     multitenancy_enabled: false
 
+    # Default is ./metrics-activity.log — unwritable for the non-root user in
+    # the read-only working dir; put it on the data volume.
+    activity_tracker:
+      filepath: /data/metrics-activity.log
+
     server:
       http_listen_port: 8080
       grpc_listen_port: 9095

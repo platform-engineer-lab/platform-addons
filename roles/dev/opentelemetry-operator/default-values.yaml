@@ -1,0 +1,17 @@
+# The operator's manager needs a collector image reference to default the
+# OpenTelemetryCollector CRs it manages.
+manager:
+  collectorImage:
+    repository: otel/opentelemetry-collector-k8s
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# cert-manager (already installed, wave 0) issues the webhook certs.
+admissionWebhooks:
+  certManager:
+    enabled: true
