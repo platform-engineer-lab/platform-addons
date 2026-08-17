@@ -1,18 +1,21 @@
-# Observability hub: Prometheus (remote-write receiver for the spokes) + Grafana.
+# Observability hub: Prometheus scrapes the hub and forwards to Mimir (the
+# long-term multi-cluster store); Grafana queries Mimir. Spoke agents write
+# to Mimir directly.
 alertmanager:
   enabled: false
 
 prometheus:
   service:
-    # Reachable from spoke clusters inside the k3d-platform Docker network
-    # (not mapped to a host port).
     type: NodePort
     nodePort: 30090
   prometheusSpec:
-    enableRemoteWriteReceiver: true
     externalLabels:
       cluster: management
-    retention: 24h
+    # Forward the hub's own scraped series into Mimir.
+    remoteWrite:
+      - url: http://mimir:8080/api/v1/push
+    # Local TSDB is now just a short buffer; Mimir holds the history.
+    retention: 6h
     # Select every ServiceMonitor/PodMonitor in the cluster, not only
     # helm-release-labelled ones (we ship custom monitors in monitoring-config).
     serviceMonitorSelectorNilUsesHelmValues: false

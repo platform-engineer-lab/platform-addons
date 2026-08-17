@@ -12,7 +12,7 @@ prometheus:
     externalLabels:
       cluster: prod
     remoteWrite:
-      - url: http://k3d-management-server-0:30090/api/v1/write
+      - url: http://k3d-management-server-0:30091/api/v1/push   # Grafana Mimir distributor
     # Select every ServiceMonitor/PodMonitor, not only helm-labelled ones.
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
