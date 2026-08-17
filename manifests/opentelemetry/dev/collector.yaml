@@ -34,10 +34,9 @@ spec:
         endpoint: http://k3d-management-server-0:30318
         tls:
           insecure: true
-      prometheusremotewrite/mimir:
-        endpoint: http://k3d-management-server-0:30091/api/v1/push
-        external_labels:
-          cluster: dev
+      otlphttp/mimir:
+        # Mimir ingests OTLP metrics natively at /otlp/v1/metrics.
+        endpoint: http://k3d-management-server-0:30091/otlp
         tls:
           insecure: true
     service:
@@ -49,4 +48,4 @@ spec:
         metrics:
           receivers: [otlp]
           processors: [resource, batch]
-          exporters: [prometheusremotewrite/mimir]
+          exporters: [otlphttp/mimir]
