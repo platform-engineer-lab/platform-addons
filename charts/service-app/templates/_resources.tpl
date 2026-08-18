@@ -57,6 +57,20 @@ spec:
         plugins:
           argoproj-labs/gatewayAPI:
             httpRoute: {{ .Release.Name }}
+      {{- if .Values.rollout.canary.analysis.enabled }}
+      # Background SLO gate: queries Mimir for the RED success-rate during the
+      # canary; a breach aborts the rollout (which also holds cross-env promotion).
+      analysis:
+        templates:
+          - templateName: red-success-rate
+            clusterScope: true
+        startingStep: {{ .Values.rollout.canary.analysis.startingStep | default 1 }}
+        args:
+          - name: service-name
+            value: {{ .Release.Name }}
+          - name: cluster
+            value: {{ .Values.cluster | quote }}
+      {{- end }}
       steps:
         {{- toYaml .Values.rollout.canary.steps | nindent 8 }}
 {{- end -}}
