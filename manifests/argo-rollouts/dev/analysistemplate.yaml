@@ -1,0 +1,25 @@
+# Reusable RED success-rate gate for canary rollouts. Queries the hub Mimir for
+# Tempo-generated span metrics (cluster-scoped so every app references one copy).
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterAnalysisTemplate
+metadata:
+  name: red-success-rate
+spec:
+  args:
+    - name: service-name
+    - name: cluster
+  metrics:
+    - name: success-rate
+      interval: 30s
+      # 3 consecutive breaches abort the rollout; runs continuously in background.
+      failureLimit: 3
+      successCondition: result[0] >= 0.95
+      provider:
+        prometheus:
+          # Hub Mimir query API, reachable via the CoreDNS hub-name override.
+          address: http://k3d-management-server-0:30091/prometheus
+          query: |
+            sum(rate(traces_spanmetrics_calls_total{service="{{args.service-name}}",cluster="{{args.cluster}}",status_code!="STATUS_CODE_ERROR"}[2m]))
+            /
+            sum(rate(traces_spanmetrics_calls_total{service="{{args.service-name}}",cluster="{{args.cluster}}"}[2m]))
+            or on() vector(1)
