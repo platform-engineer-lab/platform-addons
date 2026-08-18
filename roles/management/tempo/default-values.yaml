@@ -16,14 +16,32 @@ tempo:
   resources:
     requests:
       cpu: 100m
-      memory: 256Mi
+      memory: 384Mi
     limits:
       cpu: 500m
-      memory: 512Mi
+      memory: 768Mi
+
+  # Metrics-generator: derive RED span metrics + a service graph from traces and
+  # remote-write them to Mimir. Powers Argo Rollouts canary analysis and the
+  # Grafana serviceMap / tracesToMetrics / node-graph correlations.
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://mimir:8080/api/v1/push
+    processor:
+      span_metrics:
+        # dev and prod both report service="spring-service" — a cluster label is
+        # required or their span metrics collide in Mimir.
+        dimensions:
+          - cluster
+
+  # overrides.defaults activates the generator processors for the (anonymous) tenant.
+  overrides:
+    defaults:
+      metrics_generator:
+        processors:
+          - service-graphs
+          - span-metrics
 
 persistence:
   enabled: true
   size: 5Gi
-
-# Metrics generator writes span metrics to Mimir (RED metrics) — enabled later
-# once Mimir is up; keep off for the initial bring-up.
