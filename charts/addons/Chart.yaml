@@ -1,0 +1,8 @@
+apiVersion: v2
+name: addons
+description: >-
+  Renders the per-role platform addon Argo CD Applications from a single
+  template. One entry per addon in the role's values list replaces the
+  hand-written roles/<role>/<addon>/application.yaml files.
+type: application
+version: 0.1.0

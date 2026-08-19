@@ -1,0 +1,65 @@
+{{- $root := . -}}
+{{- range $a := .Values.addons }}
+{{- if has $root.Values.role $a.roles }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $a.fullName | default (printf "%s-%s" $a.name $root.Values.role) }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $a.wave | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform-addons
+  {{- if eq $a.type "helm" }}
+  {{- $dir := $a.dir | default $a.name }}
+  sources:
+    - repoURL: {{ $a.repoURL }}
+      chart: {{ $a.chart }}
+      targetRevision: {{ $a.targetRevision }}
+      helm:
+        releaseName: {{ $a.releaseName | default $a.name }}
+        valueFiles:
+        {{- range $a.valueFiles }}
+          - $config/roles/{{ $root.Values.role }}/{{ $dir }}/{{ . }}
+        {{- end }}
+        {{- if $a.roleValueFile }}
+          - $config/roles/{{ $root.Values.role }}/{{ $dir }}/{{ $root.Values.role }}-values.yaml
+        {{- end }}
+    - repoURL: https://github.com/platform-engineer-lab/platform-addons
+      targetRevision: HEAD
+      ref: config
+  {{- else if eq $a.type "helm-plain" }}
+  source:
+    repoURL: {{ $a.repoURL }}
+    chart: {{ $a.chart }}
+    targetRevision: {{ $a.targetRevision }}
+    helm:
+      releaseName: {{ $a.releaseName | default $a.name }}
+  {{- else }}
+  source:
+    repoURL: https://github.com/platform-engineer-lab/platform-addons
+    targetRevision: {{ $a.targetRevision | default "HEAD" }}
+    path: {{ if $a.path }}{{ $a.path }}{{ else if $a.sharedPath }}{{ $a.pathBase }}{{ else }}{{ $a.pathBase }}/{{ $root.Values.role }}{{ end }}
+  {{- end }}
+  destination:
+    name: {{ $root.Values.destinationName }}
+    namespace: {{ $a.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    {{- range $a.syncOptions }}
+      - {{ . }}
+    {{- end }}
+    retry:
+      limit: {{ $a.retry.limit }}
+      backoff:
+        duration: {{ $a.retry.duration }}
+        factor: 2
+        maxDuration: 5m
+---
+{{- end }}
+{{- end }}

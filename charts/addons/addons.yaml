@@ -1,0 +1,238 @@
+# Single source of truth for platform addons. Each entry declares the roles it
+# applies to; the addons chart renders one Argo CD Application per (addon × role)
+# with role-specific name / destination / value-file paths.
+#
+# type:  helm        multi-source (upstream chart + $config values ref)
+#        helm-plain  single-source helm chart, no $config values
+#        manifests   single-source path (pathBase[+role] | sharedPath | literal path)
+addons:
+  # ---- shared across all roles -------------------------------------------
+  - name: cert-manager
+    roles: [dev, prod, management]
+    type: helm
+    wave: "0"
+    namespace: cert-manager
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.20.2
+    valueFiles: [default-values.yaml]
+    roleValueFile: true
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: external-secrets
+    roles: [dev, prod, management]
+    type: helm
+    wave: "0"
+    namespace: external-secrets
+    repoURL: https://charts.external-secrets.io
+    chart: external-secrets
+    targetRevision: 2.7.0
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: external-secrets-config
+    roles: [dev, prod, management]
+    type: manifests
+    wave: "2"
+    namespace: external-secrets
+    pathBase: manifests/external-secrets
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: kyverno
+    roles: [dev, prod, management]
+    type: helm
+    wave: "1"
+    namespace: kyverno
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.2.6
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: kyverno-policies
+    roles: [dev, prod, management]
+    type: manifests
+    wave: "2"
+    namespace: kyverno
+    pathBase: manifests/kyverno
+    sharedPath: true
+    syncOptions: [ServerSideApply=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: envoy-gateway
+    roles: [dev, prod, management]
+    type: helm-plain
+    wave: "2"
+    namespace: envoy-gateway-system
+    repoURL: registry-1.docker.io/envoyproxy
+    chart: gateway-helm
+    targetRevision: v1.8.1
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: envoy-gateway-config          # spokes: route lives in the podinfo ns
+    roles: [dev, prod]
+    type: manifests
+    wave: "3"
+    namespace: podinfo
+    pathBase: manifests/envoy-gateway
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: envoy-gateway-config          # management: argocd ns (hosts the Argo CD route)
+    roles: [management]
+    type: manifests
+    wave: "3"
+    namespace: argocd
+    pathBase: manifests/envoy-gateway
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
+
+  # ---- spoke only (dev + prod) -------------------------------------------
+  - name: alloy
+    roles: [dev, prod]
+    type: helm
+    wave: "1"
+    namespace: monitoring
+    repoURL: https://grafana.github.io/helm-charts
+    chart: alloy
+    targetRevision: 1.10.1
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: argo-rollouts
+    roles: [dev, prod]
+    type: helm
+    wave: "1"
+    namespace: argo-rollouts
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-rollouts
+    targetRevision: 2.41.0
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: argo-rollouts-config
+    roles: [dev, prod]
+    type: manifests
+    wave: "2"
+    namespace: argo-rollouts
+    pathBase: manifests/argo-rollouts
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: opentelemetry-operator
+    roles: [dev, prod]
+    type: helm
+    wave: "1"
+    namespace: opentelemetry-operator-system
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-operator
+    targetRevision: 0.121.0
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: opentelemetry-config
+    roles: [dev, prod]
+    type: manifests
+    wave: "2"
+    namespace: monitoring
+    pathBase: manifests/opentelemetry
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: prometheus-agent
+    roles: [dev, prod]
+    type: helm
+    wave: "1"
+    namespace: monitoring
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 87.17.0
+    releaseName: prometheus-agent
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  # ---- management only ---------------------------------------------------
+  - name: gitops-promoter
+    fullName: gitops-promoter          # no role suffix (single-cluster addon)
+    roles: [management]
+    type: manifests
+    wave: "1"
+    namespace: promoter-system
+    path: charts/gitops-promoter       # local wrapper chart
+    targetRevision: main
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: gitops-promoter-config
+    fullName: gitops-promoter-config
+    roles: [management]
+    type: manifests
+    wave: "2"
+    namespace: promoter-system
+    pathBase: manifests/gitops-promoter
+    sharedPath: true
+    syncOptions: [CreateNamespace=true, ServerSideApply=true]
+    retry: { limit: 10, duration: 10s }
+
+  - name: kube-prometheus-stack
+    roles: [management]
+    type: helm
+    wave: "1"
+    namespace: monitoring
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 87.17.0
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: loki
+    roles: [management]
+    type: helm
+    wave: "1"
+    namespace: monitoring
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: 7.1.0
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: tempo
+    roles: [management]
+    type: helm
+    wave: "1"
+    namespace: monitoring
+    repoURL: https://grafana.github.io/helm-charts
+    chart: tempo
+    targetRevision: 1.24.4
+    valueFiles: [default-values.yaml]
+    syncOptions: [ServerSideApply=true, CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: mimir
+    roles: [management]
+    type: manifests
+    wave: "1"
+    namespace: monitoring
+    pathBase: manifests/mimir
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 5, duration: 30s }
+
+  - name: monitoring-config
+    roles: [management]
+    type: manifests
+    wave: "2"
+    namespace: monitoring
+    pathBase: manifests/monitoring
+    syncOptions: [CreateNamespace=true]
+    retry: { limit: 10, duration: 10s }
