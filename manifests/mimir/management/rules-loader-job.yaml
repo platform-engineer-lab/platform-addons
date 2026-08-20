@@ -1,0 +1,42 @@
+# Loads the alert rules into the Mimir ruler via the official tool (mimirtool
+# handles the ruler API + object-key encoding that a raw filesystem mount does
+# not). Runs as an Argo CD PostSync hook — re-loads whenever the rules change
+# and repopulates after a fresh PVC. Rules then persist in ruler_storage (PVC).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mimir-rules-loader
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: mimir-rules-loader
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mimirtool
+          image: grafana/mimirtool:2.13.0
+          command:
+            - sh
+            - -c
+            - |
+              cp /rules-cm/platform /tmp/platform.yaml
+              until mimirtool rules load --address=http://mimir:8080 --id=anonymous /tmp/platform.yaml; do
+                echo "waiting for mimir ruler..."; sleep 5
+              done
+              echo "rules loaded"
+          volumeMounts:
+            - name: rules
+              mountPath: /rules-cm
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+      volumes:
+        - name: rules
+          configMap:
+            name: mimir-rules

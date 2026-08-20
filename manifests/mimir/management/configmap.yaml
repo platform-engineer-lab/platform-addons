@@ -38,12 +38,12 @@ data:
       tsdb:
         dir: /data/tsdb
 
-    # Rule *storage* is the read-only ConfigMap mount (GitOps-managed rules);
-    # the ruler evaluates them against all of Mimir and alerts Alertmanager.
+    # Rules are loaded into this store by the mimir-rules-loader PostSync Job
+    # (mimirtool → ruler API); the PVC persists them across restarts.
     ruler_storage:
       backend: filesystem
       filesystem:
-        dir: /etc/mimir-rules
+        dir: /data/ruler
 
     ruler:
       alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093

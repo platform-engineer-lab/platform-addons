@@ -21,25 +21,6 @@ spec:
         fsGroup: 10001
         runAsUser: 10001
         runAsNonRoot: true
-      initContainers:
-        # Copy rules into a clean emptyDir — ConfigMap volumes use ..data
-        # symlinks that break Mimir's filesystem ruler-store <tenant>/<ns> walk.
-        - name: copy-rules
-          image: busybox:1.37
-          # Mimir's ruler filesystem store keys the namespace as base64url; a
-          # plainly-named file is never discovered. Name it base64("platform").
-          command:
-            - sh
-            - -c
-            - mkdir -p /rules/anonymous && cp /rules-cm/platform "/rules/anonymous/$(printf platform | base64)"
-          volumeMounts:
-            - name: rules-src
-              mountPath: /rules-cm
-            - name: rules
-              mountPath: /rules
-          resources:
-            requests: { cpu: 10m, memory: 16Mi }
-            limits: { cpu: 50m, memory: 32Mi }
       containers:
         - name: mimir
           image: grafana/mimir:3.1.2
@@ -73,10 +54,6 @@ spec:
               mountPath: /etc/mimir
             - name: data
               mountPath: /data
-            # ruler_storage.filesystem.dir = /etc/mimir-rules; the init container
-            # populates <dir>/anonymous/platform (tenant "anonymous").
-            - name: rules
-              mountPath: /etc/mimir-rules
       volumes:
         - name: config
           configMap:
@@ -84,8 +61,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: mimir-data
-        - name: rules-src
-          configMap:
-            name: mimir-rules
-        - name: rules
-          emptyDir: {}
