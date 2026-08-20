@@ -234,5 +234,6 @@ addons:
     wave: "2"
     namespace: monitoring
     pathBase: manifests/monitoring
+    recurse: true          # also pick up dashboards/ (Grafana dashboard CMs)
     syncOptions: [CreateNamespace=true]
     retry: { limit: 10, duration: 10s }

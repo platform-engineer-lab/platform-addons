@@ -42,6 +42,10 @@ spec:
     repoURL: https://github.com/platform-engineer-lab/platform-addons
     targetRevision: {{ $a.targetRevision | default "HEAD" }}
     path: {{ if $a.path }}{{ $a.path }}{{ else if $a.sharedPath }}{{ $a.pathBase }}{{ else }}{{ $a.pathBase }}/{{ $root.Values.role }}{{ end }}
+    {{- if $a.recurse }}
+    directory:
+      recurse: true
+    {{- end }}
   {{- end }}
   destination:
     name: {{ $root.Values.destinationName }}
