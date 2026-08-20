@@ -26,10 +26,12 @@ spec:
         # symlinks that break Mimir's filesystem ruler-store <tenant>/<ns> walk.
         - name: copy-rules
           image: busybox:1.37
+          # Mimir's ruler filesystem store keys the namespace as base64url; a
+          # plainly-named file is never discovered. Name it base64("platform").
           command:
             - sh
             - -c
-            - mkdir -p /rules/anonymous && cp /rules-cm/platform /rules/anonymous/platform
+            - mkdir -p /rules/anonymous && cp /rules-cm/platform "/rules/anonymous/$(printf platform | base64)"
           volumeMounts:
             - name: rules-src
               mountPath: /rules-cm
