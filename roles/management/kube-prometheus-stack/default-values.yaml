@@ -34,6 +34,11 @@ grafana:
     existingSecret: grafana-admin
     userKey: admin-user
     passwordKey: admin-password
+  grafana.ini:
+    dashboards:
+      # Land on the platform overview instead of Grafana's blank welcome page.
+      # The sidecar writes each dashboard ConfigMap key to /tmp/dashboards/<key>.
+      default_home_dashboard_path: /tmp/dashboards/platform-overview.json
   additionalDataSources:
     - name: Loki
       type: loki
@@ -92,6 +97,12 @@ grafana:
       # Mimir is the default datasource (above); don't also provision the
       # chart's built-in in-cluster Prometheus as default.
       defaultDatasourceEnabled: false
+    dashboards:
+      # Group our custom dashboards (annotation grafana_dashboard_folder) into
+      # a "Platform" folder instead of General.
+      folderAnnotation: grafana_dashboard_folder
+      provider:
+        foldersFromFilesStructure: true
 
 prometheusOperator:
   resources:
