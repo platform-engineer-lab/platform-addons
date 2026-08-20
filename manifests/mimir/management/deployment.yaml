@@ -54,6 +54,10 @@ spec:
               mountPath: /etc/mimir
             - name: data
               mountPath: /data
+            # ruler_storage.filesystem.dir = /etc/mimir-rules; tenant dir "anonymous"
+            - name: rules
+              mountPath: /etc/mimir-rules/anonymous
+              readOnly: true
       volumes:
         - name: config
           configMap:
@@ -61,3 +65,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: mimir-data
+        - name: rules
+          configMap:
+            name: mimir-rules

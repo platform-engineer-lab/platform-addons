@@ -1,0 +1,53 @@
+# Mimir ruler rules, mounted at /etc/mimir-rules/anonymous/platform (tenant
+# "anonymous", multitenancy off). Evaluated against all-cluster Mimir data.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-rules
+  namespace: monitoring
+data:
+  platform: |
+    groups:
+      - name: platform-watchdog
+        interval: 1m
+        rules:
+          - alert: Watchdog
+            expr: vector(1)
+            labels:
+              severity: none
+            annotations:
+              summary: Alerting pipeline is alive (always firing by design).
+
+      - name: platform-availability
+        interval: 1m
+        rules:
+          - alert: TargetDown
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Scrape target down: {{ $labels.job }} on {{ $labels.cluster }}"
+
+      - name: platform-apps
+        interval: 1m
+        rules:
+          - alert: HighErrorRate
+            expr: |
+              sum by (service, cluster) (rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m]))
+              /
+              sum by (service, cluster) (rate(traces_spanmetrics_calls_total[5m]))
+              > 0.05
+            for: 10m
+            labels:
+              severity: critical
+            annotations:
+              summary: "{{ $labels.service }} on {{ $labels.cluster }} error rate above 5%"
+
+          - alert: ArgoCDAppUnhealthy
+            expr: argocd_app_info{health_status=~"Degraded|Missing|Unknown"} == 1
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Argo CD app {{ $labels.name }} is {{ $labels.health_status }}"

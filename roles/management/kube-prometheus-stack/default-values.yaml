@@ -2,7 +2,30 @@
 # long-term multi-cluster store); Grafana queries Mimir. Spoke agents write
 # to Mimir directly.
 alertmanager:
-  enabled: false
+  # Receives alerts from the Mimir ruler; viewed in Grafana / the AM UI.
+  # Null receiver — no external notifications (Slack/email is a later swap).
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  config:
+    route:
+      receiver: "null"
+      group_by: [alertname, cluster]
+      group_wait: 15s
+      group_interval: 1m
+      repeat_interval: 4h
+      routes:
+        - matchers: [alertname = "Watchdog"]
+          receiver: "null"
+          repeat_interval: 5m
+    receivers:
+      - name: "null"
 
 prometheus:
   service:
@@ -79,6 +102,15 @@ grafana:
           datasourceUid: mimir
         nodeGraph:
           enabled: true
+    # View Mimir-ruler alerts (routed via Alertmanager) in Grafana → Alerting.
+    - name: Alertmanager
+      type: alertmanager
+      uid: alertmanager
+      url: http://kube-prometheus-stack-alertmanager.monitoring:9093
+      access: proxy
+      jsonData:
+        implementation: prometheus
+        handleGrafanaManagedAlerts: false
   resources:
     requests:
       cpu: 50m

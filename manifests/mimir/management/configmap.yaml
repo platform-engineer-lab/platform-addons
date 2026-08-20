@@ -36,10 +36,20 @@ data:
       tsdb:
         dir: /data/tsdb
 
+    # Rule *storage* is the read-only ConfigMap mount (GitOps-managed rules);
+    # the ruler evaluates them against all of Mimir and alerts Alertmanager.
     ruler_storage:
       backend: filesystem
       filesystem:
-        dir: /data/ruler
+        dir: /etc/mimir-rules
+
+    ruler:
+      alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093
+      enable_api: true
+      rule_path: /data/ruler-tmp        # writable scratch (PVC), not the rule store
+      ring:
+        kvstore:
+          store: memberlist
 
     compactor:
       data_dir: /data/compactor
