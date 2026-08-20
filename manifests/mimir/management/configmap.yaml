@@ -47,6 +47,7 @@ data:
       alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093
       enable_api: true
       rule_path: /data/ruler-tmp        # writable scratch (PVC), not the rule store
+      poll_interval: 1m                 # reload rules from the store every minute (default 10m)
       ring:
         kvstore:
           store: memberlist
