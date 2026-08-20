@@ -1,5 +1,6 @@
-# Mimir ruler rules, mounted at /etc/mimir-rules/anonymous/platform (tenant
-# "anonymous", multitenancy off). Evaluated against all-cluster Mimir data.
+# Mimir ruler alert rules (tenant "anonymous", multitenancy off), evaluated
+# against all-cluster Mimir data. Delivered to the ruler by the mimir-rules-
+# loader PostSync Job (mimirtool); the `platform` key becomes the rule namespace.
 apiVersion: v1
 kind: ConfigMap
 metadata:

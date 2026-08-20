@@ -1,6 +1,17 @@
 # Observability hub: Prometheus scrapes the hub and forwards to Mimir (the
 # long-term multi-cluster store); Grafana queries Mimir. Spoke agents write
 # to Mimir directly.
+
+# k3s runs the control plane embedded (no separately-scrapeable kube-controller-
+# manager / scheduler / proxy / etcd), so those default "down" alerts are false
+# positives in k3d — disable them for a clean alert signal.
+defaultRules:
+  rules:
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeProxy: false
+    etcd: false
+
 alertmanager:
   # Receives alerts from the Mimir ruler; viewed in Grafana / the AM UI.
   # Null receiver — no external notifications (Slack/email is a later swap).
