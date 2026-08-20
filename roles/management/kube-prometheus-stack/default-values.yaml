@@ -37,8 +37,9 @@ grafana:
   grafana.ini:
     dashboards:
       # Land on the platform overview instead of Grafana's blank welcome page.
-      # The sidecar writes each dashboard ConfigMap key to /tmp/dashboards/<key>.
-      default_home_dashboard_path: /tmp/dashboards/platform-overview.json
+      # foldersFromFilesStructure writes folder-annotated dashboards into a
+      # subdir named after the folder, so the path includes /Platform/.
+      default_home_dashboard_path: /tmp/dashboards/Platform/platform-overview.json
   additionalDataSources:
     - name: Loki
       type: loki
