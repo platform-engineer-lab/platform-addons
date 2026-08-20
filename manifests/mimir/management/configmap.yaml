@@ -8,7 +8,9 @@ metadata:
   namespace: monitoring
 data:
   mimir.yaml: |
-    target: all
+    # `all` is the monolith set but excludes the ruler — add it explicitly so
+    # alert rules are evaluated (alertmanager stays external: kube-prometheus-stack).
+    target: all,ruler
     multitenancy_enabled: false
 
     # Default is ./metrics-activity.log — unwritable for the non-root user in
